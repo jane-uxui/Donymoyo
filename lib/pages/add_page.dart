@@ -25,7 +25,6 @@ class AddPage extends StatefulWidget {
   State<AddPage> createState() => _AddPageState();
 }
 
-
 class _AddPageState extends State<AddPage> {
   final PageController _pageController = PageController();
   final _expenseService = ExpenseService();
@@ -64,7 +63,9 @@ class _AddPageState extends State<AddPage> {
   void _onKeypadTapped(String value) {
     setState(() {
       if (value == '←') {
-        _amount = _amount.length > 1 ? _amount.substring(0, _amount.length - 1) : '0';
+        _amount = _amount.length > 1
+            ? _amount.substring(0, _amount.length - 1)
+            : '0';
         return;
       }
 
@@ -88,7 +89,11 @@ class _AddPageState extends State<AddPage> {
     });
   }
 
-  String _today() => DateFormat('MM.dd').format(widget.selectedDate);
+  String _today() {
+    const weekdays = ['월', '화', '수', '목', '금', '토', '일'];
+    final date = DateFormat('MM.dd').format(widget.selectedDate);
+    return '$date (${weekdays[widget.selectedDate.weekday - 1]})';
+  }
 
   // ===== UI Tokens (메인 앱과 통일) =====
   static const Color bg = Color(0xFF333333);
@@ -150,21 +155,22 @@ class _AddPageState extends State<AddPage> {
       ],
     );
   }
+
   Future<void> _save() async {
     final cat = _selectedCategory;
     final amount = int.tryParse(_amount) ?? 0;
     final memo = _memoCtrl.text.trim();
 
     if (cat == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('카테고리를 선택해줘')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('카테고리를 선택해줘')));
       return;
     }
     if (amount <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('금액을 입력해줘')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('금액을 입력해줘')));
       return;
     }
 
@@ -201,6 +207,7 @@ class _AddPageState extends State<AddPage> {
       if (mounted) setState(() => _loading = false);
     }
   }
+
   @override
   void initState() {
     super.initState();
@@ -282,14 +289,25 @@ class _AmountPage extends StatelessWidget {
             // big amount
             Expanded(
               child: Center(
-                child: Text(
-                  amountText,
-                  style: const TextStyle(
-                    fontFamily: 'Pretendard',
-                    fontSize: 48,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
-                    letterSpacing: -1.2,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 8,
+                  ),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      amountText,
+                      style: const TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontSize: 48,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                        letterSpacing: -1.2,
+                        height: 1.18,
+                        leadingDistribution: TextLeadingDistribution.even,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -407,121 +425,138 @@ class _DetailPage extends StatelessWidget {
       ),
       body: SafeArea(
         top: false,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const SizedBox(height: 6),
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const SizedBox(height: 6),
 
-              Text(
-                amountText,
-                style: const TextStyle(
-                  fontFamily: 'Pretendard',
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.white,
-                  letterSpacing: -1.0,
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // memo pill
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 18),
-                decoration: BoxDecoration(
-                  color: pill,
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: neoShadow,
-                ),
-                child: TextField(
-                  controller: memoCtrl,
-                  style: const TextStyle(
-                    fontFamily: 'NotoSansKR',
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    hintText: 'Memo',
-                    hintStyle: TextStyle(
-                      fontFamily: 'NotoSansKR',
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF999999),
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 34),
-
-              // categories (3 columns)
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: cats.length,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  mainAxisSpacing: 22,
-                  crossAxisSpacing: 22,
-                  childAspectRatio: 2.3,
-                ),
-                itemBuilder: (context, i) {
-                  final c = cats[i];
-                  final isSel = selected == c.label;
-                  return GestureDetector(
-                    onTap: () => onSelect(c.label),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 180),
-                      curve: Curves.easeOut,
-                      transform: isSel
-                          ? (Matrix4.identity()..translate(0, -4)..scale(1.08))
-                          : Matrix4.identity(),
-                      decoration: BoxDecoration(
-                        color: c.bg,
-                        borderRadius: BorderRadius.circular(20),
-                        border: isSel
-                            ? Border.all(
-                                color: Colors.white,
-                                width: 2.5,
-                              )
-                            : Border.all(
-                                color: Colors.transparent,
-                                width: 2,
-                              ),
-                        boxShadow: isSel
-                            ? [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.35),
-                                  blurRadius: 14,
-                                  offset: const Offset(0, 8),
-                                )
-                              ]
-                            : [],
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        c.label,
-                        style: TextStyle(
-                          fontFamily: 'NotoSansKR',
-                          fontSize: isSel ? 22 : 20, // ⭐ 선택 시 글자도 살짝 커짐
-                          fontWeight: FontWeight.w800,
-                          color: c.fg,
-                          letterSpacing: -0.6,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 3),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          amountText,
+                          style: const TextStyle(
+                            fontFamily: 'Pretendard',
+                            fontSize: 24,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            letterSpacing: -1.0,
+                            height: 1.18,
+                            leadingDistribution: TextLeadingDistribution.even,
+                          ),
                         ),
                       ),
                     ),
-                  );
-                },
+
+                    const SizedBox(height: 24),
+
+                    // memo pill
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 18),
+                      decoration: BoxDecoration(
+                        color: pill,
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: neoShadow,
+                      ),
+                      child: TextField(
+                        controller: memoCtrl,
+                        style: const TextStyle(
+                          fontFamily: 'NotoSansKR',
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
+                          hintText: 'Memo',
+                          hintStyle: TextStyle(
+                            fontFamily: 'NotoSansKR',
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF999999),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 34),
+
+                    // categories (3 columns)
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: cats.length,
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 3,
+                            mainAxisSpacing: 22,
+                            crossAxisSpacing: 22,
+                            childAspectRatio: 2.3,
+                          ),
+                      itemBuilder: (context, i) {
+                        final c = cats[i];
+                        final isSel = selected == c.label;
+                        return GestureDetector(
+                          onTap: () => onSelect(c.label),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 180),
+                            curve: Curves.easeOut,
+                            transform: isSel
+                                ? (Matrix4.identity()
+                                    ..translate(0, -4)
+                                    ..scale(1.08))
+                                : Matrix4.identity(),
+                            decoration: BoxDecoration(
+                              color: c.bg,
+                              borderRadius: BorderRadius.circular(20),
+                              border: isSel
+                                  ? Border.all(color: Colors.white, width: 2.5)
+                                  : Border.all(
+                                      color: Colors.transparent,
+                                      width: 2,
+                                    ),
+                              boxShadow: isSel
+                                  ? [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(
+                                          alpha: 0.35,
+                                        ),
+                                        blurRadius: 14,
+                                        offset: const Offset(0, 8),
+                                      ),
+                                    ]
+                                  : [],
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              c.label,
+                              style: TextStyle(
+                                fontFamily: 'NotoSansKR',
+                                fontSize: isSel ? 22 : 20,
+                                fontWeight: FontWeight.w800,
+                                color: c.fg,
+                                letterSpacing: -0.6,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
-
-              const SizedBox(height: 28),
-
-              SizedBox(
+            ),
+            const SizedBox(height: 22),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+              child: SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: Container(
@@ -544,8 +579,8 @@ class _DetailPage extends StatelessWidget {
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -597,11 +632,7 @@ class _KeypadOverlay extends StatelessWidget {
 
     return Column(
       children: keys
-          .map(
-            (row) => Row(
-              children: row.map(cell).toList(),
-            ),
-          )
+          .map((row) => Row(children: row.map(cell).toList()))
           .toList(),
     );
   }

@@ -4,17 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart';
 
-
 import 'add_page.dart';
 import 'category_data.dart';
 
 class CalendarPage extends StatefulWidget {
   final ValueChanged<DateTime>? onDaySelected;
 
-  const CalendarPage({
-    super.key,
-    this.onDaySelected,
-  });
+  const CalendarPage({super.key, this.onDaySelected});
 
   @override
   State<CalendarPage> createState() => _CalendarPageState();
@@ -24,8 +20,11 @@ class _CalendarPageState extends State<CalendarPage>
     with SingleTickerProviderStateMixin {
   final Color accent = const Color(0xFFE6A4B4);
 
-  DateTime _focusedMonth =
-      DateTime(DateTime.now().year, DateTime.now().month, 1);
+  DateTime _focusedMonth = DateTime(
+    DateTime.now().year,
+    DateTime.now().month,
+    1,
+  );
   DateTime? _selectedDay;
 
   bool get showDayList => _selectedDay != null;
@@ -109,15 +108,15 @@ class _CalendarPageState extends State<CalendarPage>
       category: (d['category'] ?? '') as String,
       memo: (d['memo'] ?? '') as String,
       date: (d['date'] as Timestamp).toDate(),
-      createdAt:
-          d['createdAt'] is Timestamp ? (d['createdAt'] as Timestamp).toDate() : null,
+      createdAt: d['createdAt'] is Timestamp
+          ? (d['createdAt'] as Timestamp).toDate()
+          : null,
     );
   }
 
   void _goPrevMonth() {
     setState(() {
-      _focusedMonth =
-          DateTime(_focusedMonth.year, _focusedMonth.month - 1, 1);
+      _focusedMonth = DateTime(_focusedMonth.year, _focusedMonth.month - 1, 1);
       _selectedDay = null;
       _panelHeight = _panelDefaultHeight;
       _monthStream = _watchMonth();
@@ -126,8 +125,7 @@ class _CalendarPageState extends State<CalendarPage>
 
   void _goNextMonth() {
     setState(() {
-      _focusedMonth =
-          DateTime(_focusedMonth.year, _focusedMonth.month + 1, 1);
+      _focusedMonth = DateTime(_focusedMonth.year, _focusedMonth.month + 1, 1);
       _selectedDay = null;
       _panelHeight = _panelDefaultHeight;
       _monthStream = _watchMonth();
@@ -135,22 +133,21 @@ class _CalendarPageState extends State<CalendarPage>
   }
 
   double get _panelProgress {
-    final t = (_panelHeight - _panelMinHeight) / (_panelMaxHeight - _panelMinHeight);
+    final t =
+        (_panelHeight - _panelMinHeight) / (_panelMaxHeight - _panelMinHeight);
     return t.clamp(0.0, 1.0);
   }
 
   void _animatePanelTo(double target) {
     _panelSnapController.stop();
 
-    _panelSnapAnimation = Tween<double>(
-      begin: _panelHeight,
-      end: target,
-    ).animate(
-      CurvedAnimation(
-        parent: _panelSnapController,
-        curve: Curves.easeOutCubic,
-      ),
-    );
+    _panelSnapAnimation = Tween<double>(begin: _panelHeight, end: target)
+        .animate(
+          CurvedAnimation(
+            parent: _panelSnapController,
+            curve: Curves.easeOutCubic,
+          ),
+        );
 
     _panelSnapController
       ..reset()
@@ -173,11 +170,7 @@ class _CalendarPageState extends State<CalendarPage>
     final velocity = details.primaryVelocity ?? 0;
     final startHeight = _panelDragStartHeight ?? _panelHeight;
     final dragDelta = _panelHeight - startHeight;
-    const snapHeights = [
-      _panelMinHeight,
-      _panelDefaultHeight,
-      _panelMaxHeight,
-    ];
+    const snapHeights = [_panelMinHeight, _panelDefaultHeight, _panelMaxHeight];
 
     var startIndex = 0;
     var shortestDistance = double.infinity;
@@ -192,14 +185,16 @@ class _CalendarPageState extends State<CalendarPage>
     final int direction;
     if (velocity < -120 || (velocity.abs() <= 120 && dragDelta > 1)) {
       direction = 1;
-    } else if (velocity > 120 ||
-        (velocity.abs() <= 120 && dragDelta < -1)) {
+    } else if (velocity > 120 || (velocity.abs() <= 120 && dragDelta < -1)) {
       direction = -1;
     } else {
       direction = 0;
     }
 
-    final targetIndex = (startIndex + direction).clamp(0, snapHeights.length - 1);
+    final targetIndex = (startIndex + direction).clamp(
+      0,
+      snapHeights.length - 1,
+    );
     final target = snapHeights[targetIndex];
 
     _panelDragStartHeight = null;
@@ -260,8 +255,10 @@ class _CalendarPageState extends State<CalendarPage>
             final docs = monthSnap.data?.docs ?? const [];
             final monthExpenses = docs.map(_fromDoc).toList();
 
-            final int monthTotal =
-                monthExpenses.fold(0, (sum, e) => sum + e.amount);
+            final int monthTotal = monthExpenses.fold(
+              0,
+              (sum, e) => sum + e.amount,
+            );
 
             final Map<DateTime, int> byDay = {};
             for (final e in monthExpenses) {
@@ -301,8 +298,11 @@ class _CalendarPageState extends State<CalendarPage>
                               accent: accent,
                               onDaySelected: (d) {
                                 setState(() {
-                                  final tapped =
-                                      DateTime(d.year, d.month, d.day);
+                                  final tapped = DateTime(
+                                    d.year,
+                                    d.month,
+                                    d.day,
+                                  );
                                   if (_selectedDay != null &&
                                       _dayStart(_selectedDay!) == tapped) {
                                     _selectedDay = null;
@@ -337,28 +337,31 @@ class _CalendarPageState extends State<CalendarPage>
                     ),
                     child: showDayList
                         ? _DayDetailPanel(
-                          day: _selectedDay!,
-                          items: monthExpenses
-                              .where((e) =>
-                                  e.date.year == _selectedDay!.year &&
-                                  e.date.month == _selectedDay!.month &&
-                                  e.date.day == _selectedDay!.day)
-                              .toList()
-                            ..sort((a, b) {
-                              final aTime = a.createdAt ?? a.date;
-                              final bTime = b.createdAt ?? b.date;
-                              return bTime.compareTo(aTime);
-                            }),
-                          accent: accent,
-                          onEdit: _editExpense,
-                          onDelete: (id) async {
-                            await _deleteExpense(id);
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('삭제 완료')),
-                              );
-                            }
-                          },
+                            day: _selectedDay!,
+                            items:
+                                monthExpenses
+                                    .where(
+                                      (e) =>
+                                          e.date.year == _selectedDay!.year &&
+                                          e.date.month == _selectedDay!.month &&
+                                          e.date.day == _selectedDay!.day,
+                                    )
+                                    .toList()
+                                  ..sort((a, b) {
+                                    final aTime = a.createdAt ?? a.date;
+                                    final bTime = b.createdAt ?? b.date;
+                                    return bTime.compareTo(aTime);
+                                  }),
+                            accent: accent,
+                            onEdit: _editExpense,
+                            onDelete: (id) async {
+                              await _deleteExpense(id);
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('삭제 완료')),
+                                );
+                              }
+                            },
                           )
                         : Padding(
                             padding: const EdgeInsets.fromLTRB(22, 18, 22, 18),
@@ -424,11 +427,7 @@ class _CalendarHeader extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 6),
-              const Icon(
-                Icons.edit,
-                color: Color(0xFF999999),
-                size: 18,
-              ),
+              const Icon(Icons.edit, color: Color(0xFF999999), size: 18),
             ],
           ),
         ),
@@ -491,13 +490,20 @@ class _MonthGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final firstDayOfMonth = DateTime(focusedMonth.year, focusedMonth.month, 1);
-    final lastDayOfMonth =
-        DateTime(focusedMonth.year, focusedMonth.month + 1, 0);
+    final lastDayOfMonth = DateTime(
+      focusedMonth.year,
+      focusedMonth.month + 1,
+      0,
+    );
 
     final leading = firstDayOfMonth.weekday % 7;
     final totalDays = lastDayOfMonth.day;
     final totalCells = ((leading + totalDays) / 7).ceil() * 7;
-    final prevMonthLastDay = DateTime(focusedMonth.year, focusedMonth.month, 0).day;
+    final prevMonthLastDay = DateTime(
+      focusedMonth.year,
+      focusedMonth.month,
+      0,
+    ).day;
 
     final List<DateTime> cells = List.generate(totalCells, (index) {
       final dayNumber = index - leading + 1;
@@ -532,7 +538,8 @@ class _MonthGrid extends StatelessWidget {
         final date = cells[index];
         final isCurrentMonth = date.month == focusedMonth.month;
 
-        final isSelected = selectedDay != null &&
+        final isSelected =
+            selectedDay != null &&
             date.year == selectedDay!.year &&
             date.month == selectedDay!.month &&
             date.day == selectedDay!.day;
@@ -584,7 +591,9 @@ class _DayCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSmall = MediaQuery.of(context).size.width < 380;
-    final numColor = disabled ? Colors.white.withValues(alpha: 0.35) : Colors.white;
+    final numColor = disabled
+        ? Colors.white.withValues(alpha: 0.35)
+        : Colors.white;
     final double circle = isSmall ? 38 : 44;
 
     return GestureDetector(
@@ -609,11 +618,11 @@ class _DayCell extends StatelessWidget {
                 fontSize: isSmall ? 15 : 16,
                 fontWeight: FontWeight.w600,
                 color: active
-                  ? Colors.white
-                  : isToday
-                      ? const Color(0xFFFFB3B3)
-                      : numColor,
-                      // 오늘날짜 텍스트색으로 표시
+                    ? Colors.white
+                    : isToday
+                    ? const Color(0xFFFFB3B3)
+                    : numColor,
+                // 오늘날짜 텍스트색으로 표시
               ),
             ),
           ),
@@ -675,11 +684,11 @@ class _MonthCategoryPanel extends StatelessWidget {
 
         // 0.0이면 접힌 상태, 1.0이면 완전히 펼쳐진 상태입니다.
         final double safeProgress = progress.clamp(0.0, 1.0);
-        final double revealProgress =
-            Curves.easeOutCubic.transform(safeProgress);
+        final double revealProgress = Curves.easeOutCubic.transform(
+          safeProgress,
+        );
 
         return Column(
-          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (handle != null) handle!,
@@ -706,27 +715,32 @@ class _MonthCategoryPanel extends StatelessWidget {
               ),
             ),
 
-            // 펼칠 때만 위에서 아래로 나타나는 카테고리 영역
-            ClipRect(
-              child: Align(
-                alignment: Alignment.topLeft,
-                heightFactor: revealProgress,
-                child: Opacity(
-                  opacity: revealProgress,
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 24),
-                    child: Wrap(
-                      spacing: columnSpacing,
-                      runSpacing: rowSpacing,
-                      children: visibleEntries.map((e) {
-                        return SizedBox(
-                          width: itemWidth,
-                          child: _CategoryRowChip(
-                            category: e.key,
-                            amount: fmt.format(e.value),
-                          ),
-                        );
-                      }).toList(),
+            // 패널의 남은 공간 안에서 카테고리 전체가 잘리지 않도록 맞춥니다.
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 20),
+                child: ClipRect(
+                  child: Opacity(
+                    opacity: revealProgress,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.topLeft,
+                      child: SizedBox(
+                        width: constraints.maxWidth,
+                        child: Wrap(
+                          spacing: columnSpacing,
+                          runSpacing: rowSpacing,
+                          children: visibleEntries.map((e) {
+                            return SizedBox(
+                              width: itemWidth,
+                              child: _CategoryRowChip(
+                                category: e.key,
+                                amount: fmt.format(e.value),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -743,10 +757,7 @@ class _CategoryRowChip extends StatelessWidget {
   final String category;
   final String amount;
 
-  const _CategoryRowChip({
-    required this.category,
-    required this.amount,
-  });
+  const _CategoryRowChip({required this.category, required this.amount});
 
   @override
   Widget build(BuildContext context) {
@@ -779,7 +790,8 @@ class _CategoryRowChip extends StatelessWidget {
               fontSize: 18,
               fontWeight: FontWeight.w800,
               color: Colors.white,
-              height: 1.0,
+              height: 1.2,
+              leadingDistribution: TextLeadingDistribution.even,
             ),
           ),
         ),
@@ -908,7 +920,12 @@ class _DayDetailPanel extends StatelessWidget {
                           children: [
                             SlidableAction(
                               onPressed: (_) => onEdit(e),
-                              backgroundColor: const Color.fromARGB(255, 171, 176, 228),
+                              backgroundColor: const Color.fromARGB(
+                                255,
+                                171,
+                                176,
+                                228,
+                              ),
                               foregroundColor: Colors.white,
                               icon: Icons.edit,
                               label: '수정',
@@ -931,9 +948,10 @@ class _DayDetailPanel extends StatelessWidget {
                           ],
                         ),
                         child: Container(
-                          
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 14),
+                            horizontal: 14,
+                            vertical: 14,
+                          ),
                           decoration: BoxDecoration(
                             color: const Color(0xFF3A3A3A),
                             borderRadius: BorderRadius.circular(16),

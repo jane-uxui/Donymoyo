@@ -12,7 +12,7 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  static const double _defaultLimit = 3312000;
+  static const double _defaultLimit = 0;
 
   void _showSetLimitOverlay(double currentLimit) {
     showGeneralDialog(
