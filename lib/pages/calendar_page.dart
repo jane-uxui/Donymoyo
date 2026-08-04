@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart';
 
+
 import 'add_page.dart';
+import 'category_data.dart';
 
 class CalendarPage extends StatefulWidget {
   final ValueChanged<DateTime>? onDaySelected;
@@ -864,6 +866,7 @@ class _DayDetailPanel extends StatelessWidget {
                     separatorBuilder: (_, __) => const SizedBox(height: 10),
                     itemBuilder: (context, index) {
                       final e = items[index];
+                      final categoryStyle = getCategoryStyle(e.category);
                       return Slidable(
                         key: ValueKey(e.id),
                         startActionPane: ActionPane(
@@ -872,7 +875,7 @@ class _DayDetailPanel extends StatelessWidget {
                           children: [
                             SlidableAction(
                               onPressed: (_) => onEdit(e),
-                              backgroundColor: const Color(0xFF5D6BFF),
+                              backgroundColor: const Color.fromARGB(255, 171, 176, 228),
                               foregroundColor: Colors.white,
                               icon: Icons.edit,
                               label: '수정',
@@ -895,6 +898,7 @@ class _DayDetailPanel extends StatelessWidget {
                           ],
                         ),
                         child: Container(
+                          
                           padding: const EdgeInsets.symmetric(
                               horizontal: 14, vertical: 14),
                           decoration: BoxDecoration(
@@ -909,15 +913,15 @@ class _DayDetailPanel extends StatelessWidget {
                                   vertical: 6,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFE8B0C2),
+                                  color: categoryStyle.backgroundColor,
                                   borderRadius: BorderRadius.circular(14),
                                 ),
                                 child: Text(
                                   e.category,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w700,
-                                    color: Color(0xFF6A1232),
+                                    color: categoryStyle.textColor,
                                   ),
                                 ),
                               ),

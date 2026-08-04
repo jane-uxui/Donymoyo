@@ -35,7 +35,7 @@ class _AddPageState extends State<AddPage> {
   final TextEditingController _memoCtrl = TextEditingController();
   String? _selectedCategory;
 
-  // 디자인 카테고리(스크샷 기준)
+  // 디자인 카테고리
   final List<_Cat> _cats = const [
     _Cat('식비', Color(0xFFF2C9D6), Color(0xFF6A1E3B)),
     _Cat('배달', Color(0xFFF2E1CF), Color(0xFF7A3D00)),
