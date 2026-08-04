@@ -30,12 +30,15 @@ class _CalendarPageState extends State<CalendarPage>
 
   bool get showDayList => _selectedDay != null;
 
-  static const double _panelMinHeight = 150;
-  static const double _panelMaxHeight = 320;
-  double _panelHeight = 260;
+  static const double _panelMinHeight = 115;
+  static const double _panelDefaultHeight = 220;
+  static const double _panelMaxHeight = 500;
+  double _panelHeight = _panelDefaultHeight;
 
   late final AnimationController _panelSnapController;
   Animation<double>? _panelSnapAnimation;
+  double? _panelDragStartHeight;
+  late Stream<QuerySnapshot<Map<String, dynamic>>> _monthStream;
 
   String get _uid {
     final user = FirebaseAuth.instance.currentUser;
@@ -116,7 +119,8 @@ class _CalendarPageState extends State<CalendarPage>
       _focusedMonth =
           DateTime(_focusedMonth.year, _focusedMonth.month - 1, 1);
       _selectedDay = null;
-      _panelHeight = 260;
+      _panelHeight = _panelDefaultHeight;
+      _monthStream = _watchMonth();
     });
   }
 
@@ -125,7 +129,8 @@ class _CalendarPageState extends State<CalendarPage>
       _focusedMonth =
           DateTime(_focusedMonth.year, _focusedMonth.month + 1, 1);
       _selectedDay = null;
-      _panelHeight = 260;
+      _panelHeight = _panelDefaultHeight;
+      _monthStream = _watchMonth();
     });
   }
 
@@ -153,13 +158,11 @@ class _CalendarPageState extends State<CalendarPage>
   }
 
   void _onHandleDragStart(DragStartDetails details) {
-    if (showDayList) return;
     _panelSnapController.stop();
+    _panelDragStartHeight = _panelHeight;
   }
 
   void _onHandleDragUpdate(DragUpdateDetails details) {
-    if (showDayList) return;
-
     setState(() {
       _panelHeight -= details.delta.dy;
       _panelHeight = _panelHeight.clamp(_panelMinHeight, _panelMaxHeight);
@@ -167,26 +170,47 @@ class _CalendarPageState extends State<CalendarPage>
   }
 
   void _onHandleDragEnd(DragEndDetails details) {
-    if (showDayList) return;
-
     final velocity = details.primaryVelocity ?? 0;
-    final middle = (_panelMinHeight + _panelMaxHeight) / 2;
+    final startHeight = _panelDragStartHeight ?? _panelHeight;
+    final dragDelta = _panelHeight - startHeight;
+    const snapHeights = [
+      _panelMinHeight,
+      _panelDefaultHeight,
+      _panelMaxHeight,
+    ];
 
-    double target;
-    if (velocity > 120) {
-      target = _panelMinHeight;
-    } else if (velocity < -120) {
-      target = _panelMaxHeight;
-    } else {
-      target = _panelHeight < middle ? _panelMinHeight : _panelMaxHeight;
+    var startIndex = 0;
+    var shortestDistance = double.infinity;
+    for (var i = 0; i < snapHeights.length; i++) {
+      final distance = (snapHeights[i] - startHeight).abs();
+      if (distance < shortestDistance) {
+        shortestDistance = distance;
+        startIndex = i;
+      }
     }
 
+    final int direction;
+    if (velocity < -120 || (velocity.abs() <= 120 && dragDelta > 1)) {
+      direction = 1;
+    } else if (velocity > 120 ||
+        (velocity.abs() <= 120 && dragDelta < -1)) {
+      direction = -1;
+    } else {
+      direction = 0;
+    }
+
+    final targetIndex = (startIndex + direction).clamp(0, snapHeights.length - 1);
+    final target = snapHeights[targetIndex];
+
+    _panelDragStartHeight = null;
     _animatePanelTo(target);
   }
 
   @override
   void initState() {
     super.initState();
+
+    _monthStream = _watchMonth();
 
     _panelSnapController = AnimationController(
       vsync: this,
@@ -218,7 +242,7 @@ class _CalendarPageState extends State<CalendarPage>
       backgroundColor: const Color(0xFF333333),
       body: SafeArea(
         child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-          stream: _watchMonth(),
+          stream: _monthStream,
           builder: (context, monthSnap) {
             if (monthSnap.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
@@ -261,7 +285,7 @@ class _CalendarPageState extends State<CalendarPage>
                             onTitleTap: () {
                               setState(() {
                                 _selectedDay = null;
-                                _panelHeight = 260;
+                                _panelHeight = _panelDefaultHeight;
                               });
                             },
                           ),
@@ -297,17 +321,22 @@ class _CalendarPageState extends State<CalendarPage>
                   ),
                 ),
 
-                Container(
-                  width: double.infinity,
-                  height: _panelHeight,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF2F2F2F),
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(28),
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onVerticalDragStart: _onHandleDragStart,
+                  onVerticalDragUpdate: _onHandleDragUpdate,
+                  onVerticalDragEnd: _onHandleDragEnd,
+                  child: Container(
+                    width: double.infinity,
+                    height: _panelHeight,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF2F2F2F),
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(28),
+                      ),
                     ),
-                  ),
-                  child: showDayList
-                      ? _DayDetailPanel(
+                    child: showDayList
+                        ? _DayDetailPanel(
                           day: _selectedDay!,
                           items: monthExpenses
                               .where((e) =>
@@ -330,21 +359,14 @@ class _CalendarPageState extends State<CalendarPage>
                               );
                             }
                           },
-                        )
-                      : Padding(
-                          padding: const EdgeInsets.fromLTRB(22, 18, 22, 18),
-                          child: SingleChildScrollView(
-                            physics: const BouncingScrollPhysics(),
-                          child: _MonthCategoryPanel(
-                            monthTotal: monthTotal,
-                            items: monthExpenses,
-                            progress: _panelProgress,
-                            handle: GestureDetector(
-                              behavior: HitTestBehavior.opaque,
-                              onVerticalDragStart: _onHandleDragStart,
-                              onVerticalDragUpdate: _onHandleDragUpdate,
-                              onVerticalDragEnd: _onHandleDragEnd,
-                              child: Center(
+                          )
+                        : Padding(
+                            padding: const EdgeInsets.fromLTRB(22, 18, 22, 18),
+                            child: _MonthCategoryPanel(
+                              monthTotal: monthTotal,
+                              items: monthExpenses,
+                              progress: _panelProgress,
+                              handle: Center(
                                 child: Opacity(
                                   opacity: 0.6 + (_panelProgress * 0.4),
                                   child: Container(
@@ -360,8 +382,7 @@ class _CalendarPageState extends State<CalendarPage>
                               ),
                             ),
                           ),
-                        ),
-                      ),
+                  ),
                 ),
               ],
             );
@@ -651,12 +672,19 @@ class _MonthCategoryPanel extends StatelessWidget {
         const double columnSpacing = 18;
         const double rowSpacing = 12;
         final double itemWidth = (constraints.maxWidth - columnSpacing) / 2;
-        final double categoryMaxHeight = 180 * progress;
+
+        // 0.0이면 접힌 상태, 1.0이면 완전히 펼쳐진 상태입니다.
+        final double safeProgress = progress.clamp(0.0, 1.0);
+        final double revealProgress =
+            Curves.easeOutCubic.transform(safeProgress);
 
         return Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (handle != null) handle!,
+
+            // 접혀도 항상 보이는 영역
             const Text(
               '이 달의 지출',
               style: TextStyle(
@@ -677,24 +705,29 @@ class _MonthCategoryPanel extends StatelessWidget {
                 height: 1.0,
               ),
             ),
-            SizedBox(height: 28 * progress),
+
+            // 펼칠 때만 위에서 아래로 나타나는 카테고리 영역
             ClipRect(
-              child: SizedBox(
-                height: categoryMaxHeight,
+              child: Align(
+                alignment: Alignment.topLeft,
+                heightFactor: revealProgress,
                 child: Opacity(
-                  opacity: Curves.easeOut.transform(progress),
-                  child: Wrap(
-                    spacing: columnSpacing,
-                    runSpacing: rowSpacing,
-                    children: visibleEntries.map((e) {
-                      return SizedBox(
-                        width: itemWidth,
-                        child: _CategoryRowChip(
-                          category: e.key,
-                          amount: fmt.format(e.value),
-                        ),
-                      );
-                    }).toList(),
+                  opacity: revealProgress,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 24),
+                    child: Wrap(
+                      spacing: columnSpacing,
+                      runSpacing: rowSpacing,
+                      children: visibleEntries.map((e) {
+                        return SizedBox(
+                          width: itemWidth,
+                          child: _CategoryRowChip(
+                            category: e.key,
+                            amount: fmt.format(e.value),
+                          ),
+                        );
+                      }).toList(),
+                    ),
                   ),
                 ),
               ),

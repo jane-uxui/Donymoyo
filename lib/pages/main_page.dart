@@ -140,7 +140,7 @@ class _MainPageState extends State<MainPage> {
                     children: [
                       Positioned(
                         left: 39 * scale,
-                        top: (100 * scale) + safeTop * 0.0,
+                        top: (40 * scale) + safeTop * 0.0,
                         child: Text(
                           title,
                           style: TextStyle(
@@ -155,7 +155,7 @@ class _MainPageState extends State<MainPage> {
 
                       Positioned(
                         left: (393 / 2 - 280 / 2) * scale,
-                        top: 179 * scale,
+                        top: 108 * scale,
                         child: Container(
                           width: 280 * scale,
                           height: 280 * scale,
@@ -202,7 +202,7 @@ class _MainPageState extends State<MainPage> {
 
                       Positioned(
                         left: 40 * scale,
-                        top: 510 * scale,
+                        top: 430 * scale,
                         child: _NeoCard(
                           width: 312 * scale,
                           height: 99 * scale,
@@ -249,10 +249,10 @@ class _MainPageState extends State<MainPage> {
 
                       Positioned(
                         left: 40 * scale,
-                        top: 631 * scale,
+                        top: 550 * scale,
                         child: _NeoCard(
                           width: 148 * scale,
-                          height: 92 * scale,
+                          height: 86 * scale,
                           radius: 8 * scale,
                           child: Padding(
                             padding: EdgeInsets.only(left: 14 * scale, top: 17 * scale),
@@ -291,13 +291,13 @@ class _MainPageState extends State<MainPage> {
 
                       Positioned(
                         left: 204 * scale,
-                        top: 631 * scale,
+                        top: 550 * scale,
                         child: GestureDetector(
                           onTap: () => _showSetLimitOverlay(spendingLimit),
                           behavior: HitTestBehavior.opaque,
                           child: _NeoCard(
                             width: 148 * scale,
-                            height: 92 * scale,
+                            height: 86 * scale,
                             radius: 8 * scale,
                             child: Padding(
                               padding: EdgeInsets.only(left: 14 * scale, top: 17 * scale),
